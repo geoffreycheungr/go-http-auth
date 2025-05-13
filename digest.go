@@ -206,8 +206,8 @@ func (da *DigestAuth) CheckAuth(r *http.Request) (username string, authinfo *str
 /*
  Default values for ClientCacheSize and ClientCacheTolerance for DigestAuth
 */
-const DefaultClientCacheSize = 1000
-const DefaultClientCacheTolerance = 100
+const DefaultClientCacheSize = 10000
+const DefaultClientCacheTolerance = 1000
 
 /*
  Wrap returns an Authenticator which uses HTTP Digest
