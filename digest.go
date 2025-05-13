@@ -84,6 +84,9 @@ func (a *DigestAuth) Purge(count int) {
  (or requires reauthentication).
 */
 func (a *DigestAuth) RequireAuth(w http.ResponseWriter, r *http.Request) {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+	
 	if len(a.clients) > a.ClientCacheSize+a.ClientCacheTolerance {
 		a.Purge(a.ClientCacheTolerance * 2)
 	}
@@ -120,6 +123,7 @@ func DigestAuthParams(authorization string) map[string]string {
 func (da *DigestAuth) CheckAuth(r *http.Request) (username string, authinfo *string) {
 	da.mutex.Lock()
 	defer da.mutex.Unlock()
+	
 	username = ""
 	authinfo = nil
 	auth := DigestAuthParams(r.Header.Get(da.Headers.V().Authorization))
@@ -249,6 +253,7 @@ func (a *DigestAuth) NewContext(ctx context.Context, r *http.Request) context.Co
 		info.ResponseHeaders.Set(a.Headers.V().AuthInfo, *authinfo)
 	} else {
 		// return back digest WWW-Authenticate header
+		a.mutex.Lock()
 		if len(a.clients) > a.ClientCacheSize+a.ClientCacheTolerance {
 			a.Purge(a.ClientCacheTolerance * 2)
 		}
@@ -257,6 +262,7 @@ func (a *DigestAuth) NewContext(ctx context.Context, r *http.Request) context.Co
 		info.ResponseHeaders.Set(a.Headers.V().Authenticate,
 			fmt.Sprintf(`Digest realm="%s", nonce="%s", opaque="%s", algorithm="MD5", qop="auth"`,
 				a.Realm, nonce, a.Opaque))
+		a.mutex.Unlock()
 	}
 	return context.WithValue(ctx, infoKey, info)
 }
